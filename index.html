@@ -4,71 +4,93 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <title>Accelerometer test</title>
-  <title>Accelerometer test</title>
+  <title>Accelerometer recording</title>
+  <title>Accelerometer recording</title>
 </head>
 
 <body>
   <main>
-    <h1>Accelerometer test</h1>
+    <h1>Accelerometer recording</h1>
     <button id="start_Accelerometer">Start Accelerometer</button>
-      <p>Num. of datapoints: <span id="num-observed-events">0</span></p>
+    <p>Num. of datapoints: <span id="num-observed-events">0</span></p>
 
-      <h4>Accelerometer</h4>
-      <ul>
-        <li>Acc X: <span id="Accelerometer_x">0</span><span> m/s<sup>2</sup></span></li>
-        <li>Acc Y: <span id="Accelerometer_y">0</span><span> m/s<sup>2</sup></span></li>
-        <li>Acc Z: <span id="Accelerometer_z">0</span><span> m/s<sup>2</sup></span></li>
-        <li>Data Interval: <span id="Accelerometer_i">0</span><span> ms</span></li>
-      </ul>
+    <h4>Accelerometer</h4>
+    <ul>
+      <li>Acc X: <span id="Accelerometer_x">0</span><span> m/s<sup>2</sup></span></li>
+      <li>Acc Y: <span id="Accelerometer_y">0</span><span> m/s<sup>2</sup></span></li>
+      <li>Acc Z: <span id="Accelerometer_z">0</span><span> m/s<sup>2</sup></span></li>
+      <li>Data Interval: <span id="Accelerometer_i">0</span><span> ms</span></li>
+    </ul>
+    <a id="saver" href="">
+      <button id="save_button" disabled>download</button>
+    </a>
 
-      <body>
-        <script>
+    <body>
+      <script>
 
 
-          function incrementEventCount() {
-            let counterElement = document.getElementById("num-observed-events")
-            let eventCount = parseInt(counterElement.innerHTML)
-            counterElement.innerHTML = eventCount + 1;
+        function incrementEventCount() {
+          let counterElement = document.getElementById("num-observed-events")
+          let eventCount = parseInt(counterElement.innerHTML)
+          counterElement.innerHTML = eventCount + 1;
+        }
+
+        function updateFieldIfNotNull(fieldName, value, precision = 10) {
+          if (value != null)
+            document.getElementById(fieldName).innerHTML = value.toFixed(precision);
+        }
+
+        function handleMotion(event) {
+          updateFieldIfNotNull('Accelerometer_x', event.acceleration.x);
+          updateFieldIfNotNull('Accelerometer_y', event.acceleration.y);
+          updateFieldIfNotNull('Accelerometer_z', event.acceleration.z);
+          updateFieldIfNotNull('Accelerometer_i', event.interval);
+          acceleration_data.push(
+            event.acceleration.x + ";" +
+            event.acceleration.y + ";" +
+            event.acceleration.z + ";" +
+            event.interval + ";");
+          incrementEventCount();
+        }
+
+        function saveTextFile() {
+          let text = acceleration_data.join("\r\n");
+          let saver = document.getElementById("saver");
+          let blob = new Blob([text], { type: 'text/plain' });
+          saver.href = URL.createObjectURL(blob);
+          saver.download = "testfile.csv";
+        }
+
+        let is_running = false;
+        let acceleration_data = [];
+        let start_button = document.getElementById("start_Accelerometer");
+        let save_button=document.getElementById("save_button");
+        start_button.onclick = function (e) {
+          e.preventDefault();
+
+          // Request permission for iOS 13+ devices
+          if (
+            DeviceMotionEvent &&
+            typeof DeviceMotionEvent.requestPermission === "function"
+          ) {
+            DeviceMotionEvent.requestPermission();
           }
 
-          function updateFieldIfNotNull(fieldName, value, precision = 10) {
-            if (value != null)
-              document.getElementById(fieldName).innerHTML = value.toFixed(precision);
+          if (is_running) {
+            window.removeEventListener("devicemotion", handleMotion);
+            start_button.innerHTML = "Start Accelerometer";
+            is_running = false;
+            saveTextFile();
+            acceleration_data = [];
+            save_button.disabled = false;
+          } else {
+            document.getElementById("start_Accelerometer").innerHTML = "Stop Accelerometer";
+            is_running = true;
+            save_button.disabled = true;
+            window.addEventListener("devicemotion", handleMotion);
           }
-
-          function handleMotion(event) {
-            updateFieldIfNotNull('Accelerometer_x', event.acceleration.x);
-            updateFieldIfNotNull('Accelerometer_y', event.acceleration.y);
-            updateFieldIfNotNull('Accelerometer_z', event.acceleration.z);
-            updateFieldIfNotNull('Accelerometer_i', event.interval, 2);
-            incrementEventCount();
-          }
-
-          let is_running = false;
-          let start_button = document.getElementById("start_Accelerometer");
-          start_button.onclick = function (e) {
-            e.preventDefault();
-
-            // Request permission for iOS 13+ devices
-            if (
-              DeviceMotionEvent &&
-              typeof DeviceMotionEvent.requestPermission === "function"
-            ) {
-              DeviceMotionEvent.requestPermission();
-            }
-
-            if (is_running) {
-              window.removeEventListener("devicemotion", handleMotion);
-              start_button.innerHTML = "Start Accelerometer";
-              is_running = false;
-            } else {
-              window.addEventListener("devicemotion", handleMotion);
-              document.getElementById("start_Accelerometer").innerHTML = "Stop Accelerometer";
-              is_running = true;
-            }
-          };
-        </script>
-      </body>
+        };
+      </script>
+    </body>
 
 </html>
