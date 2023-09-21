@@ -2,7 +2,6 @@ let ax=0;
 let ay=0;
 let az=0;
 
-window.addEventListener("load", async function () {
 
 if (window.DeviceMotionEvent != undefined) {
 	window.ondevicemotion = function(e) {
@@ -15,5 +14,4 @@ if (window.DeviceMotionEvent != undefined) {
 	}
 }
 
-}
 	
