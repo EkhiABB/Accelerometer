@@ -12,13 +12,15 @@
   <main>
     <h1>Accelerometer recording</h1>
     <button id="start_Accelerometer">Start Accelerometer</button>
-    <p>Num. of datapoints: <span id="num-observed-events">0</span></p>
+    <p>Nb events : <span id="num_events">0</span></p>
+    <p>Record Time : <span id="time_events">0</span><span> ms</span></p>
 
     <h4>Accelerometer</h4>
     <ul>
       <li>Acc X: <span id="Accelerometer_x">0</span><span> m/s<sup>2</sup></span></li>
       <li>Acc Y: <span id="Accelerometer_y">0</span><span> m/s<sup>2</sup></span></li>
       <li>Acc Z: <span id="Accelerometer_z">0</span><span> m/s<sup>2</sup></span></li>
+      <li>Acc magn: <span id="Accelerometer_magn">0</span><span> m/s<sup>2</sup></span></li>
       <li>Data Interval: <span id="Accelerometer_i">0</span><span> ms</span></li>
     </ul>
     <a id="saver" href="">
@@ -28,11 +30,23 @@
     <body>
       <script>
 
+        let is_running = false;
+        let acc_magn = 0.0;
+        let acceleration_data = [];
+        let recordTime = 0.0, msecNow = 0.0, msecLast = 0.0;
+        let start_button = document.getElementById("start_Accelerometer");
+        let save_button = document.getElementById("save_button");
+        let counterElement = document.getElementById("num_events");
+        let timeElement = document.getElementById("time_events");
 
-        function incrementEventCount() {
-          let counterElement = document.getElementById("num-observed-events")
-          let eventCount = parseInt(counterElement.innerHTML)
+
+        function updateEventTimeCount() {
+          msecNow = Date.now()
+          recordTime += (msecNow - msecLast);
+          msecLast = msecNow;
+          let eventCount = parseInt(counterElement.innerHTML);
           counterElement.innerHTML = eventCount + 1;
+          timeElement.innerHTML = recordTime;
         }
 
         function updateFieldIfNotNull(fieldName, value, precision = 10) {
@@ -45,12 +59,13 @@
           updateFieldIfNotNull('Accelerometer_y', event.acceleration.y);
           updateFieldIfNotNull('Accelerometer_z', event.acceleration.z);
           updateFieldIfNotNull('Accelerometer_i', event.interval);
-          acceleration_data.push(
-            event.acceleration.x + ";" +
-            event.acceleration.y + ";" +
-            event.acceleration.z + ";" +
-            event.interval + ";");
-          incrementEventCount();
+          updateEventTimeCount();
+          acc_magn = Math.sqrt(
+            event.acceleration.x ** 2 +
+            event.acceleration.y ** 2 +
+            event.acceleration.z ** 2);
+          updateFieldIfNotNull('Accelerometer_magn', acc_magn);
+          acceleration_data.push(acc_magn + ";" + recordTime);
         }
 
         function saveTextFile() {
@@ -58,13 +73,9 @@
           let saver = document.getElementById("saver");
           let blob = new Blob([text], { type: 'text/plain' });
           saver.href = URL.createObjectURL(blob);
-          saver.download = "testfile.csv";
+          saver.download = "AccelData.csv";
         }
 
-        let is_running = false;
-        let acceleration_data = [];
-        let start_button = document.getElementById("start_Accelerometer");
-        let save_button=document.getElementById("save_button");
         start_button.onclick = function (e) {
           e.preventDefault();
 
@@ -87,9 +98,14 @@
             document.getElementById("start_Accelerometer").innerHTML = "Stop Accelerometer";
             is_running = true;
             save_button.disabled = true;
+            counterElement.innerHTML = 0;
+            timeElement.innerHTML = 0;
+            acc_magn = 0;
+            recordTime = 0; msecNow = 0; msecLast = Date.now();
             window.addEventListener("devicemotion", handleMotion);
           }
         };
+
       </script>
     </body>
 
