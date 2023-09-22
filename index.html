@@ -65,7 +65,12 @@
             event.acceleration.y ** 2 +
             event.acceleration.z ** 2);
           updateFieldIfNotNull('Accelerometer_magn', acc_magn);
-          acceleration_data.push(acc_magn + ";" + recordTime);
+          acceleration_data.push(
+            event.acceleration.x + ";"
+            + event.acceleration.y + ";"
+            + event.acceleration.z + ";"
+            + acc_magn + ";"
+            + recordTime);
         }
 
         function saveTextFile() {
@@ -73,7 +78,7 @@
           let saver = document.getElementById("saver");
           let blob = new Blob([text], { type: 'text/plain' });
           saver.href = URL.createObjectURL(blob);
-          saver.download = "AccelData.csv";
+          saver.download = "AccelerationData.csv";
         }
 
         start_button.onclick = function (e) {
@@ -102,6 +107,7 @@
             timeElement.innerHTML = 0;
             acc_magn = 0;
             recordTime = 0; msecNow = 0; msecLast = Date.now();
+            acceleration_data.push("x;y;z;magn;time");
             window.addEventListener("devicemotion", handleMotion);
           }
         };
